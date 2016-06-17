@@ -1,92 +1,106 @@
-# GnuClear: A New Architecture for Scalable Blockchain Decentralization
+# Gnuclear
+**A New Architecture for Scalable Blockchain Decentralization**
 
-Jae Kwon jae@tendermint.com
+Jae Kwon jae@tendermint.com<br/>
 Ethan Buchman ethan@tendermint.com
 
-Table of Contents
-=================
+For discussions, check out the [gnuclear forum](http://forum.tendermint.com/c/gnuclear)
+and also see the [issues](https://github.com/gnuclear/gnuclear-whitepaper/issues)
 
-  * [GnuClear: A New Architecture for Scalable Blockchain Decentralization](#gnuclear-a-new-architecture-for-scalable-blockchain-decentralization)
-    * [Related Work](#related-work)
-      * [Consensus systems](#consensus-systems)
-        * [Classic Byzantine Fault Tolerance](#classic-byzantine-fault-tolerance)
-        * [BitShares delegated stake](#bitshares-delegated-stake)
-        * [Stellar](#stellar)
-        * [BitcoinNG](#bitcoinng)
+_NOTE: If you can read this on GitHub, then we're still actively developing this
+document.  Please check regularly for updates!._
+
+## Table of Contents ###########################################################
+
+  * [Introduction](#introduction)
+  * [Tendermint](#tendermint)
+    * [Consensus](#consensus)
+    * [Light Clients](#light-clients)
+    * [Preventing Long Range Attacks](#preventing-long-range-attacks)
+    * [Overcoming Forks and Censorship
+    Attacks](#overcoming-forks-and-censorship-attacks)
+    * [TMSP](#tmsp)
+  * [The Gnuclear Reactor and Shards](#the-gnuclear-reactor-and-shards)
+    * [The Gnuclear Reactor](#the-gnuclear-reactor)
+    * [Gnuclear Shards](#gnuclear-shards)
+  * [Inter-blockchain Communication (IBC)](#inter-blockchain-communication-ibc)
+    * [IBCBlockCommitTx Transaction](#ibcblockcommittx-transaction)
+    * [IBCPacketTx Transaction](#ibcpackettx-transaction)
+    * [IBC Packet Delivery
+    Acknowledgement](#ibc-packet-delivery-acknowledgement)
+  * [Transactions](#transactions)
+    * [Transaction Types](#transaction-types)
+      * [SendTx](#sendtx)
+      * [BondTx](#bondtx)
+      * [UnbondTx](#unbondtx)
+      * [SlashTx](#slashtx)
+      * [BurnQuarkTx](#burnquarktx)
+      * [NewProposalTx](#newproposaltx)
+      * [VoteTx](#votetx)
+      * [IBCBlockCommitTx](#ibcblockcommittx)
+      * [IBCPacketTx](#ibcpackettx)
+    * [Transaction Gas and Fees](#transaction-gas-and-fees)
+  * [Use Cases](#use-cases)
+    * [Pegging to Other Cryptocurrencies](#pegging-to-other-cryptocurrencies)
+    * [Ethereum Scaling](#ethereum-scaling)
+    * [Multi-Application Integration](#multi-application-integration)
+    * [Network Partition Mitigation](#network-partition-mitigation)
+    * [Federated Name Resolution System](#federated-name-resolution-system)
+  * [Issuance and Incentives](#issuance-and-incentives)
+    * [The Quark Token](#the-quark-token)
+    * [Limitations on the Number of
+    Validators](#limitations-on-the-number-of-validators)
+    * [Becoming a Validator After Genesis
+    Day](#becoming-a-validator-after-genesis-day)
+    * [Penalties for Validators](#penalties-for-validators)
+    * [Transaction Fees](#transaction-fees)
+  * [Governance](#governance)
+    * [Parameter Change Proposal](#parameter-change-proposal)
+    * [Text Proposal](#text-proposal)
+  * [Roadmap](#roadmap)
+  * [Related Work](#related-work)
+    * [Consensus Systems](#consensus-systems)
+      * [Classic Byzantine Fault Tolerance](#classic-byzantine-fault-tolerance)
+      * [BitShares delegated stake](#bitshares-delegated-stake)
+      * [Stellar](#stellar)
+      * [BitcoinNG](#bitcoinng)
       * [Casper](#casper)
-      * [Sharded blockchain state](#sharded-blockchain-state)
-        * [BigchainDB](#bigchaindb)
-        * [Interledger Protocol](#interledger-protocol)
-        * [Sidechains](#sidechains)
-        * [Ethereum Scalability Efforts](#ethereum-scalability-efforts)
-      * [General Scalability research](#general-scalability-research)
-        * [Lightning Network](#lightning-network)
-        * [Segregated Witness](#segregated-witness)
-    * [Tendermint](#tendermint)
-      * [Consensus](#consensus)
-      * [Light Clients](#light-clients)
-      * [Preventing Long Range Attacks](#preventing-long-range-attacks)
-      * [Overcoming Forks and Censorship Attacks](#overcoming-forks-and-censorship-attacks)
-      * [TMSP](#tmsp)
-    * [The GnuClear Hub and Shards](#the-gnuclear-hub-and-shards)
-      * [The GnuClear Hub](#the-gnuclear-hub)
-      * [GnuClear Shards](#gnuclear-shards)
-    * [Inter-blockchain Communication (IBC)](#inter-blockchain-communication-ibc)
-      * [IBCBlockCommitTx transaction](#ibcblockcommittx-transaction)
-      * [IBCPacketTx transaction](#ibcpackettx-transaction)
-      * [IBC Packet Delivery Acknowledgement](#ibc-packet-delivery-acknowledgement)
-    * [Use Cases](#use-cases)
-      * [Pegging to Other Cryptocurrencies](#pegging-to-other-cryptocurrencies)
-      * [Ethereum Scaling](#ethereum-scaling)
-      * [Multi-Application Integration](#multi-application-integration)
-      * [Network Partition Mitigation](#network-partition-mitigation)
-    * [Issuance and Incentives](#issuance-and-incentives)
-      * [The Gnut Token](#the-gnut-token)
-      * [Initial Gnut Distribution and Issuance](#initial-gnut-distribution-and-issuance)
-      * [Limitations on the Number of Validators](#limitations-on-the-number-of-validators)
-      * [Becoming a Validator After Genesis Day](#becoming-a-validator-after-genesis-day)
-      * [Penalties for Validators](#penalties-for-validators)
-      * [Transaction Fees](#transaction-fees)
-    * [Governance](#governance)
-      * [Parameter Change Proposal](#parameter-change-proposal)
-      * [Text Proposal](#text-proposal)
-    * [Roadmap](#roadmap)
-    * [Citations](#citations)
-    * [Appendix](#appendix)
-      * [Gas Fees for Transactions](#gas-fees-for-transactions)
-      * [TMSP specification](#tmsp-specification)
-        * [AppendTx](#appendtx)
-        * [CheckTx](#checktx)
-        * [Commit](#commit)
-        * [Query](#query)
-        * [Flush](#flush)
-        * [Info](#info)
-        * [SetOption](#setoption)
-        * [InitChain](#initchain)
-        * [BeginBlock](#beginblock)
-        * [EndBlock](#endblock)
-      * [Merkle tree &amp; proof specification](#merkle-tree--proof-specification)
-    * [Acknowledgements](#acknowledgements)
+    * [Sharded Scaling](#sharded-scaling)
+      * [Interledger Protocol](#interledger-protocol)
+      * [Sidechains](#sidechains)
+      * [Ethereum Scalability Efforts](#ethereum-scalability-efforts)
+    * [General Scaling](#general-scaling)
+      * [Lightning Network](#lightning-network)
+      * [Segregated Witness](#segregated-witness)
+  * [Appendix](#appendix)
+    * [Gas Fees for Transactions](#gas-fees-for-transactions)
+    * [TMSP specification](#tmsp-specification)
+    * [Merkle tree &amp; proof
+    specification](#merkle-tree--proof-specification)
+  * [Acknowledgements](#acknowledgements)
+  * [Citations](#citations)
 
+## Introduction ################################################################
 
 The combined success of the open-source ecosystem, of decentralized
 file-sharing, and of public cryptocurrencies, has inspired an understanding that
 decentralized internet protocols can be used to radically improve socio-economic
 infrastructure.  We have seen specialized blockchain applications like Bitcoin
-(a cryptocurrency), ZCash (a cryptocurrency for privacy), and generalized smart
-contract platforms such as Ethereum, with countless distributed applications for
-the EVM such as Augur (a prediction market) and TheDAO (an investment club).
+[\[1\]][1] (a cryptocurrency), Zerocash [\[2\]][2] (a cryptocurrency for
+privacy), and generalized smart contract platforms such as Ethereum [\[3\]][3],
+with countless distributed applications for the EVM such as Augur (a prediction
+market) and TheDAO [\[4\]][4] (an investment club).
 
 To date, however, these blockchains have suffered from a number of drawbacks,
 including their gross energy inefficiency, poor or limited performance, and
 immature governance mechanisms.  A number of proposals have been made to scale
-Bitcoin's transaction throughput such as Segregated-Witness and BitcoinNG, but
-these are vertical scaling solutions that remain limited by the capacity of a
-single physical machine, lest we sacrifice the property of complete
-auditability.  Lightning networks can help scale Bitcoin transaction volume by
-leaving some transactions off the ledger completely and is well suited for
-micropayments and privacy preserving payment rails, but may not be suitable for
-more generalized scaling needs.
+Bitcoin's transaction throughput such as Segregated-Witness [\[5\]][5] and
+BitcoinNG [\[6\]][6], but these are vertical scaling solutions that remain
+limited by the capacity of a single physical machine, lest we sacrifice the
+property of complete auditability.  The Lightning Network [\[7\]][7] can help
+scale Bitcoin transaction volume by leaving some transactions off the ledger
+completely and is well suited for micropayments and privacy preserving payment
+rails, but may not be suitable for more generalized scaling needs.
 
 An ideal solution would be one that allows multiple parallel blockchains to
 interoperate while retaining their security properties, but this has proven
@@ -94,229 +108,32 @@ difficult, if not impossible, with proof-of-work. Merged-mining, for instance,
 allows the work done to secure a parent chain to be re-used on a child chain,
 but transactions still must be validated, in order, by each node, and a
 merge-mined blockchain is vulnerable to attack if a majority of the hashing
-power on the parent is not actively merge-mining the child.
+power on the parent is not actively merge-mining the child.  An academic review
+of [alternative blockchain network
+architectures](http://vukolic.com/iNetSec_2015.pdf) is provided for additional
+context, and we provide more summaries of some proposals and their drawbacks in
+[Related Work](#related-work).
 
-Here we present GnuClear, a novel blockchain network architecture that addresses
-all of these problems.  GnuClear is a network of many independent blockchains,
-called shards, that are connected by a central blockchain, called the hub.  The
-hub and shards are powered by Tendermint Core, which provides a
-high-performance, consistent, secure consensus engine, where strict
-accountability guarantees hold over the behaviour of malicious actors.  The
-GnuClear hub is a simple multi-asset proof-of-stake cryptocurrency with a simple
-governance mechanism enabling the network to adapt and upgrade.  The hub and
-shards of the GnuClear network communicate with each other via an
-inter-blockchain communication (IBC) protocol which is formalized here.  The
-GnuClear hub utilizes IBC packets to move tokens from one shard to another while
-maintaining the total amount of tokens in the network, thus isolating each shard
-from the failure of others.
+Here we present Gnuclear, a novel blockchain network architecture that addresses
+all of these problems.  Gnuclear is a network of many independent blockchains,
+called shards, that are connected by a central blockchain, called the reactor.
+The reactor and shards are powered by Tendermint Core [\[8\]][8], which provides
+a high-performance, consistent, secure
+[PBFT-like](http://tendermint.com/blog/tendermint-vs-pbft/) consensus engine,
+where strict fork-accountability guarantees hold over the behaviour of malicious
+actors.  The Gnuclear reactor is a simple multi-asset proof-of-stake
+cryptocurrency with a simple governance mechanism enabling the network to adapt
+and upgrade.  The reactor and shards of the Gnuclear network communicate with
+each other via an inter-blockchain communication (IBC) protocol which is
+formalized here.  The Gnuclear reactor utilizes IBC packets to move tokens from
+one shard to another while maintaining the total amount of tokens in the
+network, thus isolating each shard from the failure of others.
 
-We hope that the GnuClear network can prove once and for all that blockchain
-based systems can scale as well as any other, and grow to become the foundation
-for the future internet of blockchains.
-
-## Related Work ################################################################
-
-There have been many innovations in blockchain consensus and scalability in the
-past couple of years.  This section provides a brief survey of a select number
-of important ones.
-
-### Consensus systems
-
-#### Classic Byzantine Fault Tolerance
-
-Consensus in the presence of malicious participants is a problem dating back to
-the early 80s, when Leslie Lamport coined the phrase "Byzantine fault" to refer
-to arbitrary process behavior that deviates from the intended behavior, in
-contrast to a "crash fault", wherein a process simply crashes.  Early solutions
-were discovered for synchronous networks where there is an upper bound on
-message latency, though pratical use was limited to highly controlled
-environments such as airplane controllers and datacenters synchronized via
-atomic clocks.  It was not until the late 90s that Practical Byzantine Fault
-Tolerance (PBFT) was introduced as an efficient asynchronous consensus algorithm
-able to tolerate up to ⅓ of processes behaving arbitrarily.  PBFT became the
-standard algorithm, spawning many variations, including most recently by IBM as
-part of their contribution to Hyperledger.
-
-The main benefit of Tendermint consensus over PBFT is that Tendermint has an
-improved and simplified underlying structure, some of which is a result of
-embracing the blockchain paradigm.  Tendermint blocks must commit in order,
-which obviates the complexity and communication overhead associated with PBFT's
-view-changes.  In addition, the batching of transactions into blocks allows for
-regular Merkle-hashing of the application state, rather than periodic digests as
-with PBFT's checkpointing scheme.  This allows for faster provable transaction
-commits for light-clients, and as we'll later show, faster inter-blockchain
-communication.
-
-#### BitShares delegated stake
-
-While not the first to deploy proof-of-stake (PoS), BitShares contributed
-considerably to research and adoption of PoS blockchains, particularly those
-known as "delegated" PoS.  In BitShares, stake holders elect "witnesses",
-responsible for ordering and committing transactions, and "delegates",
-responsible for co-ordinating software updates and parameter changes.  Though
-BitShares achieves high performance (100k tx/s, 1s latency) in ideal conditions,
-it is subject to double spend attacks by malicious witnesses which fork the
-blockchain without suffering an explicit economic punishment -- it suffers from
-the "nothing-at-stake" problem. BitShares attempts to mitigate the problem by
-allowing transactions to refer to recent block-hashes. Additionally,
-stakeholders can remove or replace misbehaving witnesses on a daily basis,
-though this does nothing to explicitly punish a double-spend attack that was
-successful.
-
-#### Stellar
-
-Building on an approach pioneered by Ripple, Stellar refined a model of
-Federated Byzantine Agreement wherein the processes participating in
-consensus do not constitute a fixed and globally known set.  Rather, each
-process node curates one or more "quorum slices" each constituting a set of
-trusted processes. A "quorum" in Stellar is defined to be a set of nodes that
-contain (is a superset of) at least one quorum slice for each node in the set,
-such that agreement can be reached.
-
-The security of the Stellar mechanism relies on the assumption that the
-intersection of *any* two quorums is non-empty, while the availability of a node
-requires at least one of its quorum slices to consist entirely of correct nodes,
-creating a trade-off between using large or small quorum-slices that may be
-difficult to balance without imposing significant assumptions about trust.
-Ultimately, nodes must somehow choose adequate quorum slices for there to be
-sufficient fault-tolerance (or any "intact nodes" at all, of which much of the
-results of the paper depend on), and the only provided strategy for ensuring
-such a configuration is heirarchical and similar to the Border Gateway Protocol
-(BGP), used by top-tier ISPs on the internet to establish global routing tables,
-and by that used by browsers to manage TLS certificates; both notorious for
-their insecurity.
-
-The criticism in the Stellar paper of the Tendermint-based proof-of-stake
-systems is mitigated by the token strategy described here, wherein a new type of
-token called the _gnut_ is issued that (mostly) represents the inherent value of
-the network, without competing with any preexisting currency or store of value.
-The advantage of Tendermint-based proof-of-stake, then, is its relative
-simplicity, while still providing sufficient, and provable security guarantees.
-
-#### BitcoinNG
-
-BitcoinNG is a proposed improvement to Bitcoin that would allow for forms of
-vertical scalability, such as increasing the block size, without the negative
-economic consequences typically associated with such a change, such as the
-disproportionately large impact on small miners.  This improvement is achieved
-by separating leader election from transaction broadcast: leaders are first
-elected by proof-of-work in "micro-blocks", and then able to broadcast
-transactions to be committed until a new micro-block is found. This reduces the
-bandwidth requirements necessary to win the PoW race, allowing small miners to
-more fairly compete, and allowing transactions to be committed more regularly by
-the last miner to find a micro-block.
-
-
-### Casper
-
-Casper is a proposed proof-of-stake consensus algorithm for Ethereum.  Its prime
-mode of operation is "consensus-by-bet".  The idea is that by letting validators
-iteratively bet on which block it believes will become committed into the
-blockchain based on the other bets that it's seen so far, finality can be
-achieved eventually.
-[link](https://blog.ethereum.org/2015/12/28/understanding-serenity-part-2-casper/).
-This is an active area of research by the Casper team.  The challenge is in
-constructing a betting mechanism that can be proven to be an evolutionarily
-stable strategy.  The main benefit of Casper as compared to Tendermint may be in
-offering "availability over consistency" -- consensus does not require a +⅔
-quorum from the validators -- perhaps at the cost of commit speed or
-implementation complexity.
-
-
-
-### Sharded blockchain state
-
-
-#### BigchainDB
-
-BigchainDB is a modification of the successful RethinkDB (a NoSQL datastore for
-JSON-documents, with a query language) to include additional security guarantees
-without sacrificing the ability to perform over a million transactions per
-second. RethinkDB achieves this high performance with a combination of sharding
-and replication, and utilizes the Raft consensus algorithm only for automatic
-fail-over of replica "primaries" (leaders). RethinkDB does not currently provide
-Byzantine fault-tolerance.
-
-BigchainDB uses RethinkDB as the "underlying DB" to first order blocks, and adds
-a layer of validator signatures on top to vote on the block's validity. A block
-is considered valid and committed when a majority of the validators vote in
-favor of it.  Making BigchainDB fully Byzantine fault-tolerant is a work in
-progress.
-
-#### Interledger Protocol
-//TODO
-
-
-#### Sidechains
-
-Sidechains are a proposed mechanism for scaling the Bitcoin network via
-alternative blockchains that are "pegged" to the Bitcoin blockchain.  Sidechains
-allow bitcoins to effectively move from the Bitcoin blockchain to the sidechain
-and back, and allow for experimentation in new features on the sidechain.  The
-mechanism, known as a two-way peg, uses the standard Simple Payment Verification
-(SPV) used by Bitcoin light clients, where proof of a sufficiently long chain of
-block headers containing a particular transaction serves as evidence for the
-existence of the transaction. Each chain in the peg serves as a light client of
-the other, using SPV proofs to determine when coins should be transferred across
-the peg and back.  Of course, since Bitcoin uses proof-of-work, Bitcoin
-sidechains suffer from the many risks of proof-of-work as a consensus mechanism,
-which are particularly exacerbated in a scalability context. That said, the core
-mechanism of the two-way peg is in principle the same as that employed by the
-GnuClear network, though using a consensus algorithm that scales more securely.
-
-
-#### Ethereum Scalability Efforts
-
-Ethereum is currently researching a number of different strategies to shard the
-state of the Ethereum blockchain to address scalability needs. These efforts have
-the goal of maintaining the abstraction layer offered by the current Ethereum
-Virtual Machine across the shared state space. Research efforts are being
-conducted by the Ethereum Foundation under Serenity, the Consensus organizations
-and the Dfinity project.
-
-
-### General Scalability research
-
-
-#### Lightning Network
-
-The lightning network is a proposed message relay network operating at a layer
-above the Bitcoin blockchain, enabling many orders of magnitude improvement in
-transaction throughput by moving the majority of transactions outside of the
-consensus ledger into so-called "payment channels". This is made possible (with
-great difficulty) by the Bitcoin scripting language, which enables parties to
-enter into stateful contracts where the state can be updated by sharing digital
-signatures, and contracts can be closed by finally publishing evidence onto the
-blockchain, a mechanism first popularized by cross-chain atomic swaps.  By
-openning payment channels with many parties, participants in the lightning
-network can become focal points for routing the payments of others, leading to a
-fully connected payment channel network, at the cost of capital being tied up on
-payment channels.
-
-While the lightning network can also easily extend across multiple independent
-blockchains to allow for the transfer of _value_ via an exchange market, it
-cannot be used to assymetrically transfer _tokens_ from one blockchain to
-another.  The main benefit of the GnuClear network described here is to enable
-such direct token transfers.  That said, we expect payment channels and
-lightning networks to become widely adopted along with our token transfer
-mechanism, for cost-saving and privacy reasons.
-
-
-#### Segregated Witness
-
-Segregated Witness is a Bitcoin improvement proposal
-[link](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki) that aims
-to increase the per-block tranasction throughput 2X or 3X, while simultaneously
-making block syncing faster for new nodes.  The brilliance of this solution is
-in how it works within the limitations of Bitcoin's current protocol and allows
-for a soft-fork upgrade (i.e. clients with older versions of the software will
-continue to function after the upgrade).  Tendermint being a new protocol has no
-design restrictions, so it has a different scaling priorities.  Primarily,
-Tendermint uses a BFT round-robin algorithm based on cryptographic signatures
-instead of mining, which trivially allows horizontal scaling through multiple
-parallel blockchains, while regular, more frequent block commits allow for
-vertical scaling as well.
-
+We believe that Gnuclear proves that Tendermint BFT consensus is well suited for
+scaling public proof-of-stake blockchains, and that it can compete with
+proof-of-work in speed, security, and scalability.  Above all, we hope it grows
+into a platform that works for everyone interested in distributed ledger
+systems.
 
 ## Tendermint ##################################################################
 
@@ -325,73 +142,92 @@ used to build applications with it.
 
 ### Consensus
 
+_NOTE:  +⅔ means "more than ⅔", while ⅓+ means "⅓ or more"._
+
 A fault-tolerant consensus protocol enables a set of non-faulty processes to
 eventually agree on a value proposed by at least one of them.  The problem is
 made more difficult by asynchronous network conditions, wherein messages may
 have arbitrarily long delays, and by Byzantine faults, wherein processes may
 exhibit arbitrary, possibly malicious, behaviour.  In particular, it is well
-known that deterministic consensus in asynchronous networks is impossible
-\cite{flp}, and that consensus protocols can tolerate strictly fewer Byzantine
-faults than crash faults (⅓ of processes, vs. ½). The former results from the
-inability to distinguish crash failures from asynchronous message delay. The
-latter from the fact that three processes are not enough for a safe majority
-vote if one of them can lie (you need at least four).
+known that deterministic consensus in asynchronous networks is impossible with
+any fail-stop faults [\[9\]][9], and that consensus protocols in non-synchronous
+systems can tolerate strictly fewer Byzantine faults than crash faults (⅓ of
+processes, vs. ½). The former results from the inability to distinguish crash
+failures from asynchronous message delay. The latter from the fact that three
+processes are not enough for a safe majority vote if one of them can lie (you
+need at least four).
 
 In addition to providing optimal fault tolerance, a well designed consensus
 protocol should provide additional guarantees in the event that the tolerance
 capacity is exceeded and the consensus fails.  This is especially necessary in
-public economic systems, where Byzantine behaviour can have substantial
-financial reward.  The most important such guarantee is a form of
-\emph{accountability}, where the processes that caused the consensus to fail can
-be identified and punished according to the rules of the protocol, or, possibly,
-the legal system.  When the legal system is unreliable, validators can be forced
-to make security deposits in order to participate, and those deposits can be
-revoked, or slashed, when malicious behaviour is detected \cite{slasher}.
+economic systems, where Byzantine behaviour can have substantial financial
+reward.  The most important such guarantee is a form of _fork-accountability_,
+where the processes that caused the consensus to fail (ie.  caused clients of
+the protocol to accept different values - a fork) can be identified and punished
+according to the rules of the protocol, or, possibly, the legal system.  When
+the legal system is unreliable, validators can be forced to make security
+deposits in order to participate, and those deposits can be revoked, or slashed,
+when malicious behaviour is detected [\[10\]][10].
 
-Tendermint is a Byzantine fault-tolerant (BFT) consensus protocol for
-asynchronous networks, notable for its simplicity, performance, and
-accountability.  The protocol requires a fixed, known set of N validators, where
-the ith validator is identified by its public key, V_i. Validators attempt to
-come to consensus on one block at a time, where a block is a list of
-transactions.  Consensus on a block proceeds in rounds. Each round has a
-round-leader, or proposer, who proposes a block. The validators then vote, in
-stages, on whether or not to accept the proposed block or move onto the next
-round.
+Note this is much unlike Bitcoin, where forking is a regular occurence due to
+network asynchrony and the probabilistic nature of finding partial hash
+collissions.  Since in many cases, a malicious fork is indistinguishable from a
+fork due to asynchrony, Bitcoin can not reliably implement fork-accountability,
+other than the implicit opportunity cost paid by miners for mining an orphaned
+block.
 
-We call the voting stages PreVote and PreCommit. A vote can be for a particular
-block or for Nil.  We call a collection of +⅔ PreVotes for a single block in the
-same round a Polka, and a collection of +⅔ PreCommits for a single block in the
-same round a Commit.  If +⅔ PreCommit for Nil in the same round, they move to
-the next round.
+Tendermint is a partially synchronous Byzantine fault-tolerant (BFT) consensus
+protocol derived from the DLS consensus algorithm [\[20\]][20]. Tendermint is
+notable for its simplicity, performance, and fork-accountability.  The protocol
+requires a fixed, known set of <em>N</em> validators, where the <em>i</em>th
+validator is identified by its public key.  Validators attempt to come to
+consensus on one block at a time, where a block is a list of transactions.
+Consensus on a block proceeds in rounds. Each round has a round-leader, or
+proposer, who proposes a block. The validators then vote, in stages, on whether
+or not to accept the proposed block or move on to the next round.
 
-The proposer at round r is simply r mod N. Note that the strict determinism
-incurs a weak synchrony assumption as faulty leaders must be detected and
-skipped.  Thus, validators wait some amount TimeoutPropose before they Prevote
-Nil.  Progression through the rest of the round is fully asychronous, in that
-progress is only made once a validator hears from +⅔ of the network.
+We call the voting stages _PreVote_ and _PreCommit_. A vote can be for a
+particular block or for _Nil_.  We call a collection of +⅔ PreVotes for a single
+block in the same round a _Polka_, and a collection of +⅔ PreCommits for a
+single block in the same round a _Commit_.  If +⅔ PreCommit for Nil in the same
+round, they move to the next round.
+
+The proposer for a round is chosen deterministically from the ordered list of
+validators.  Note that strict determinism in the protocol incurs a weak
+synchrony assumption as faulty leaders must be detected and skipped.  Thus,
+validators wait some amount _TimeoutPropose_ before they Prevote Nil, and the
+value of TimeoutPropose increases with each round.  Progression through the rest
+of a round is fully asychronous, in that progress is only made once a validator
+hears from +⅔ of the network.  In practice, it would take an extremely strong
+adversary to indefinetely thwart the weak synchrony assumption (causing the
+consensus to fail to ever commit a block), and doing so can be made even more
+difficult by using randomized values of TimeoutPropose on each validator.
 
 An additional set of constraints, or Locking Rules, ensure that the network will
 eventually commit just one value. Any malicious attempt to cause more than one
 value to be committed can be identified.  First, a PreCommit for a block must
 come with justification, in the form of a Polka for that block. If the validator
-has already PreCommit a block at round R_1, we say they are "locked" on that
-block, and the Polka used to justify the new PreCommit at round R_2 must come in
-a round R_polka where `R_1 < R_polka <= R_2`.  Second, validators must Propose
-and/or PreVote the block they are "locked" on.  Together, these conditions
-ensure that a validator does not PreCommit without sufficient evidence, and that
-validators which have already PreCommit cannot contribute to evidence to
-PreCommit something else.  This ensures both safety and liveness of the
-consensus algorithm.
+has already PreCommit a block at round <em>R_1</em>, we say they are _locked_ on
+that block, and the Polka used to justify the new PreCommit at round
+<em>R_2</em> must come in a round <em>R_polka</em> where <em>R_1 &lt; R_polka
+&lt;= R_2</em>.  Second, validators must Propose and/or PreVote the block they
+are locked on.  Together, these conditions ensure that a validator does not
+PreCommit without sufficient evidence, and that validators which have already
+PreCommit cannot contribute to evidence to PreCommit something else.  This
+ensures both safety and liveness of the consensus algorithm.
 
-The full details of the protocol are described in LINK.
+The full details of the protocol are described
+[here](https://github.com/tendermint/tendermint/wiki/Byzantine-Consensus-Algorithm).
 
-Tendermint’s security derives simultaneously from its use of optimal Byzantine
-fault-tolerance and the locking mechanism.  The former ensures that ⅓ or more
-validators must be Byzantine to cause a violation of safety, where more than two
-values are committed.  The latter ensures that, if ever any set of validators
-attempts, or even succeeds, in violating safety , they can be identified by the
-protocol.  This includes both voting for conflicting blocks and broadcasting
-unjustified votes.
+Tendermint’s security derives from its use of optimal Byzantine fault-tolerance
+via super-majority (+⅔) voting and the locking mechanism.  Together, they ensure
+that:
+
+* ⅓+ validators must be Byzantine to cause a violation of safety, where more
+  than two values are committed.  
+* if ever any set of validators succeeds in violating safety, or even attempts
+  to do so, they can be identified by the protocol.  This includes both voting
+for conflicting blocks and broadcasting unjustified votes.
 
 Despite its strong guarantees, Tendermint provides exceptional performance.  In
 benchmarks of 64 nodes distributed across 7 datacenters on 5 continents, on
@@ -399,7 +235,7 @@ commodity cloud instances, Tendermint consensus can process thousands of
 transactions per second, with commit latencies on the order of one or two
 seconds.  Notably, performance of well over a thousand transactions per second
 is maintained even in harsh adversarial conditions, with validators crashing or
-broadcasting maliciously crafted votes. See FIGURE for details.
+broadcasting maliciously crafted votes. See FIGURE (TODO) for details.
 
 ### Light Clients
 
@@ -409,13 +245,13 @@ which have no global state.  Instead of syncing a chain of block headers and
 verifying the proof of work, light clients, who are assumed to know all public
 keys in the validator set, need only verify the +⅔ PreCommits in the latest
 block.  The need to sync all block headers is eliminated as the existence of an
-alternative chain (a fork) means at least ⅓ of validator's deposits can be
-slashed.  Of course, since slashing requires that _someone_ detects the fork, it
-would be prudent for light clients, or at least those that are able, to sync
-headers, perhaps more slowly, on a risk adjusted basis, where the explicit cost
-of a fork can be easily calculated at at least ⅓ of the bonded stake.
-Additionally, light clients must stay synced with changes to the validator set,
-in order to avoid certain long range attacks (TODO: link to next section).
+alternative chain (a fork) means ⅓+ of validator deposits can be slashed.  Of
+course, since slashing requires that _someone_ detects the fork, it would be
+prudent for light clients, or at least those that are able, to sync headers,
+perhaps more slowly, on a risk adjusted basis, where the explicit cost of a fork
+can be easily calculated at ⅓+ of the bonded stake.  Additionally, light clients
+must stay synced with changes to the validator set, in order to avoid certain
+[long range attacks](#preventing-long-range-attacks).
 
 In a spirit similar to Ethereum, Tendermint enables applications to embed a
 global Merkle root hash in each block, allowing easily verifiable state queries
@@ -429,14 +265,15 @@ Assuming a sufficiently resilient collection of broadcast networks and a static
 validator set, any fork in the blockchain can be detected and the deposits of
 the offending validators slashed.  This innovation, first suggested by Vitalik
 Buterin in early 2014, solves the nothing-at-stake problem of other
-proof-of-stake cryptocurrencies. However, since validator sets must be able to
-change, over a long range of time the original validators may all become
-unbonded, and hence would be free to create a new chain, from the genesis block,
-incurring no cost as they no longer have deposits locked up.  This attack came
-to be known as the Long Range Attack (LRA) in contrast to a Short Range Attack,
-where validators who are currently bonded cause a fork and are hence punishable
-(assuming an accountable BFT algorithm like Tendermint consensus). Long Range
-Attacks are often thought to be a critical blow to proof-of-stake.
+proof-of-stake cryptocurrencies (see [Related Work](#related-work)). However,
+since validator sets must be able to change, over a long range of time the
+original validators may all become unbonded, and hence would be free to create a
+new chain, from the genesis block, incurring no cost as they no longer have
+deposits locked up.  This attack came to be known as the Long Range Attack (LRA)
+in contrast to a Short Range Attack, where validators who are currently bonded
+cause a fork and are hence punishable (assuming a fork-accountable BFT algorithm
+like Tendermint consensus). Long Range Attacks are often thought to be a
+critical blow to proof-of-stake.
 
 Fortunately, the LRA can be mitigated as follows.  First, for a validator to
 unbond, thereby recovering their deposit and no longer earning fees to
@@ -444,14 +281,14 @@ participate in the consensus, the deposit must be made unavailable for an amount
 of time known as the "unbonding period", which may be on the order of weeks or
 months.  Second, for a light client to be secure, the first time it connects to
 the network it must verify a recent block-hash against a trusted source, or
-preferably multiple of them.  This condition is sometimes reffered to as "weak
+preferably multiple of them.  This condition is sometimes referred to as "weak
 subjectivity".  Finally, to remain secure, it must sync up with the latest
 validator set at least as frequently as the length of the unbonding period. This
 ensures that the light client knows about changes to the validator set before a
 validator has its capital unbonded and thus no longer at stake, which would
 allow it to deceive the client by carrying out a long range attack by creating
-new blocks beginning back at a height where it was bonded (assuming it had
-sufficient validating power then!).
+new blocks beginning back at a height where it was bonded (assuming it has
+control of sufficiently many of the early private keys).
 
 Note that overcoming the LRA in this way requires a practical tweak of the
 original security model of proof-of-work. In PoW, it is assumed that a light
@@ -463,8 +300,8 @@ authenticate what they hear from the network against trusted sources. Of course,
 this latter requirement is similar to that of Bitcoin, where the protocol and
 software must also be obtained from a trusted source.
 
-The above method for prevent LRA is well suited for validators and full nodes of
-a Tendermint-powered blockchain because these nodes are meant to remain
+The above method for preventing LRA is well suited for validators and full nodes
+of a Tendermint-powered blockchain because these nodes are meant to remain
 connected to the network.  The method is also suitable for light clients that
 can be expected to sync with the network frequently.  However, for light clients
 that are not expected to have frequent access to the internet or the blockchain
@@ -474,44 +311,49 @@ period (e.g. much longer than the unbonding period for validators) and serve
 light clients with a secondary method of attesting to the validity of current
 and past block-hashes. While these tokens do not count toward the security of
 the blockchain's consensus, they nevertheless can provide strong guarantees for
-light clients.  If historical block-hash querying are supported in Ethereum,
+light clients.  If historical block-hash querying were supported in Ethereum,
 anyone could bond their tokens in a specially designed smart contract and
 provide attestation services for pay, effectively creating a market for
 light-client LRA security.
 
 ### Overcoming Forks and Censorship Attacks
 
-Due to the definition of a block commit, any ⅓+ coalition of validators can
-halt the blockchain by not broadcasting their votes. Such a coalition can also
-censor particular transactions by rejecting blocks that include these
-transactions, though this would result in a significant proportion of block
-proposals to be rejected, which would slow down the rate of block commits of the
-blockchain, reducing its utility and value. The malicious coalition might also
-broadcast votes in a trickle so as to grind blockchain block commits to a near
-halt, or engage in any combination of these attacks.  Finally, it can cause the
+Due to the definition of a block commit, any ⅓+ coalition of validators can halt
+the blockchain by not broadcasting their votes. Such a coalition can also censor
+particular transactions by rejecting blocks that include these transactions,
+though this would result in a significant proportion of block proposals to be
+rejected, which would slow down the rate of block commits of the blockchain,
+reducing its utility and value. The malicious coalition might also broadcast
+votes in a trickle so as to grind blockchain block commits to a near halt, or
+engage in any combination of these attacks.  Finally, it can cause the
 blockchain to fork, by double-signing or violating the locking rules.
 
-If a global active adversary were also involved, it can partition the network
-in such a way that it may appear that the wrong subset of validators were
+If a global active adversary were also involved, it can partition the network in
+such a way that it may appear that the wrong subset of validators were
 responsible for the slowdown. This is not just a limitation of Tendermint, but
 rather a limitation of all consensus protocols whose network is potentially
 controlled by an active adversary.
 
 For these types of attacks, a subset of the validators through external means
 should coordinate to sign a reorg-proposal that chooses a fork (and any evidence
-thereof) and the initial subset of validators with their signatures. Clients
-should verify the signatures on the reorg-proposal, verify any evidence, and
-make a judgement or prompt the end-user for a decision.  For example, a phone
-wallet app may prompt the user with a security warning, while a refrigerator may
-accept any reorg-proposal signed by +½ of the original validators. If we further
-require that validators who sign such a reorg-proposal forego its collateral on
-all other forks, light-clients can be assured by up to ⅙ of the bonded
-collateral (⅙ == ⅔ - ½). Notice that no Byzantine fault-tolerant algorithm can
-come to consensus when ⅓+ of validators are dishonest, yet a fork assumes that
-⅓+ of validators have been dishonest by double-signing or lock-changing without
-justification. So, signing the reorg- proposal is a coordination problem that
-cannot be solved internally by any protocol -- not even Tendermint. It must be
-provided externally.
+thereof) and the initial subset of validators with their signatures. Validators
+who sign such a reorg-proposal forego its collateral on all other forks.
+Clients should verify the signatures on the reorg-proposal, verify any evidence,
+and make a judgement or prompt the end-user for a decision.  For example, a
+phone wallet app may prompt the user with a security warning, while a
+refrigerator may accept any reorg-proposal signed by +½ of the original
+validators.
+
+No non-synchronous Byzantine fault-tolerant algorithm can come to consensus when
+⅓+ of validators are dishonest, yet a fork assumes that ⅓+ of validators have
+already been dishonest by double-signing or lock-changing without justification.
+So, signing the reorg-proposal is a coordination problem that cannot be solved
+by any non-synchronous protocol (i.e. automatically, and without making
+assumptions about the reliability of the underlying network).  For now, we leave
+the problem of reorg-proposal coordination to human coordination via internet
+media.  Validators must take care to ensure that there are no significant
+network partitions, to avoid situations where two conflicting reorg-proposals
+are signed.
 
 Assuming that the external coordination medium and protocol is robust, it
 follows that forks are less of a concern than censorship attacks.
@@ -526,7 +368,7 @@ computing the state root independently for themselves.  Once detected, the only
 way to handle such a failure is via social consensus on alternative media.  For
 instance, in situations where Bitcoin has failed, whether forking due to
 software bugs (as in March 2013), or committing invalid state due to Byzantine
-behaviour of miners (as in the July 2016), the well connected community of
+behavior of miners (as in the July 2016), the well connected community of
 businesses, developers, miners, and other organizations established a social
 consensus as to what manual actions were required by participants to heal the
 network.  Furthermore, since validators of a Tendermint blockchain may be
@@ -540,7 +382,11 @@ Core.  Tendermint Core is an application-agnostic "consensus engine" that can
 turn any deterministic (blackbox) application into a distributedly replicated
 blockchain.  As the Apache Web Server or Nginx connects to the Wordpress
 application via CGI or FastCGI, Tendermint Core connects to blockchain
-applications via TMSP.
+applications via the Tendermint Socket Protocol (TMSP) [\[17\]][17]. Thus, TMSP
+allows for blockchain applications to be programmed in any language, not just
+the programming language that the consensus engine is written in.  Additionally,
+TMSP makes it possible to easily swap out the consensus layer of any existing
+blockchain stack.
 
 To draw an analogy, we will draw an analogy with a well-known cryptocurrency,
 Bitcoin.  Bitcoin is a cryptocurrency blockchain where each node maintains a
@@ -561,8 +407,8 @@ Meanwhile, the TMSP application would be responsible for
 Tendermint is able to decompose the blockchain design by offering a very simple
 API between the application process and consensus process.
 
-TMSP consists of 3 primary message types that get delivered from the core to
-the application. The application replies with corresponding response messages.
+TMSP consists of 3 primary message types that get delivered from the core to the
+application. The application replies with corresponding response messages.
 
 The `AppendTx` message is the work horse of the application. Each transaction in
 the blockchain is delivered with this message. The application needs to validate
@@ -590,51 +436,54 @@ validator set, and for the application to receive the block information, such as
 the height and the commit votes.  The full TMSP specification can be found
 [here](https://github.com/tendermint/tmsp#message-types).
 
-## The GnuClear Hub and Shards #################################################
+## The Gnuclear Reactor and Shards #############################################
 
-Here we describe a novel model of decentralization and scalability.  GnuClear is
+Here we describe a novel model of decentralization and scalability.  Gnuclear is
 a network of many blockchains powered by Tendermint via TMSP.  While existing
 proposals aim to create a "single blockchain" with total global transaction
-ordering, GnuClear permits many blockchains to run concurrently with one another
+ordering, Gnuclear permits many blockchains to run concurrently with one another
 via a sharding mechanism.
 
-At the basis, a global hub blockchain (the GnuClear hub) manages many
+At the basis, a global reactor blockchain (the Gnuclear reactor) manages many
 independent blockchain shards.  A constant stream of recent block commits from
-shards posted on the hub allows the hub to keep up with the state of each shard.
-Likewise, each shard keeps up with the state of the hub (but shards do not keep
-up with each other except indirectly through the hub).  Packets of information
-are then communicated from one chain to another by posting Merkle-proofs that
-collide with a recent block-hash from the source.  This mechanism is called
-inter-blockchain communication, or IBC for short.
+shards posted on the reactor allows the reactor to keep up with the state of
+each shard.  Likewise, each shard keeps up with the state of the reactor (but
+shards do not keep up with each other except indirectly through the reactor).
+Packets of information are then communicated from one chain to another by
+posting Merkle-proofs that collide with a recent block-hash from the source.
+This mechanism is called inter-blockchain communication, or IBC for short.
 
-(Diagram of hub and shards)
+![Figure of reactor and shards
+acknowledgement](https://raw.githubusercontent.com/gnuclear/gnuclear-whitepaper/master/images/hub_and_shards.png)
 
-Any of the shards can themselves be hubs to form a multi-level hierarchical
+Any of the shards can themselves be reactors to form a multi-level hierarchical
 network, but for the sake of clarity we will only describe the simple
-configuration with one central hub and many shards.
+configuration with one central reactor and many shards.
 
-### The GnuClear Hub
+### The Gnuclear Reactor
 
-The GnuClear hub hosts a multi-asset cryptocurrency, where tokens can be held by
-individual users or by shards themselves.  These tokens can be moved from one
-shard to another in a special IBC packet called a "coin packet".  The hub is
-responsible for preserving the global invariance of the total amount of each
-token across the shards.
+The Gnuclear reactor is a blockchain that hosts a multi-asset cryptocurrency,
+where tokens can be held by individual users or by shards themselves.  These
+tokens can be moved from one shard to another in a special IBC packet called a
+"coin packet".  The reactor is responsible for preserving the global invariance
+of the total amount of each token across the shards. IBC coin packet
+transactions must be committed by the sender, reactor and reciever blockchains.
 
-Since the GnuClear hub acts as a central ledger of tokens for the whole system,
-the security of the hub is of paramount importance.  While each shard may be a
-Tendermint blockchain that is secured by as few as 4 (or even less if BFT
-consensus is not needed), the hub must be secured by a globally decentralized
-set of validators that can withstand the most severe attack scenarios, such as a
-continental network partition or a nation-state sponsored attack.
+Since the Gnuclear reactor acts as a central ledger of tokens for the whole
+system, the security of the reactor is of paramount importance.  While each
+shard may be a Tendermint blockchain that is secured by as few as 4 (or even
+less if BFT consensus is not needed), the reactor must be secured by a globally
+decentralized set of validators that can withstand the most severe attack
+scenarios, such as a continental network partition or a nation-state sponsored
+attack.
 
-### GnuClear Shards
+### Gnuclear Shards
 
-A GnuClear shard is an independent blockchain that exchanges IBC messages with
-the Hub.  From the Hub's perspective, a shard is a multi-asset account that can
-send and receive tokens using IBC packets. Like a cryptocurrency account, a
-shard cannot transfer more tokens than it has, but can receive tokens from
-others who have them. In certain cases, a shard may be granted special
+A Gnuclear shard is an independent blockchain that exchanges IBC messages with
+the Reactor.  From the Reactor's perspective, a shard is a multi-asset account
+that can send and receive tokens using IBC packets. Like a cryptocurrency
+account, a shard cannot transfer more tokens than it has, but can receive tokens
+from others who have them. In certain cases, a shard may be granted special
 priveleges to act as a "source" of some token, where, in addition to the shard's
 balance in that token, it can send up to some maximum rate of additional tokens
 out to other accounts or shards, thereby inflating that token's supply. Such
@@ -645,22 +494,22 @@ number of priveleged shards will be created to act as pegs to other
 cryptocurrencies. The creation of new priviledged shards is left to governance.
 
 Note that a shard where +⅔ of the validators are Byzantine can commit invalid
-state.  Since the very purpose of the GnuClear hub is to avoid verifying every
-transaction on a shard, detecting such failures must be done by independent
-observers of the shard, which may appeal to social media and to the market to
-make their detection known (for instance, selling/shorting a token that is being
-artificially inflated by a Byzantine source-shard, and writing a blog post about
-the attack).  Additionally, if the validator set of the shard is not the same as
-that of the hub, and shard validators have stake bonded on the hub, an explicit
-alert mechanism may be used on the hub to challenge the validity of a block and
-to slash the deposits of offending validators.
+state.  Since the very purpose of the Gnuclear reactor is to avoid verifying
+every transaction on a shard, detecting such failures must be done by
+independent observers of the shard, which may appeal to social media and to the
+market to make their detection known (for instance, selling/shorting a token
+that is being artificially inflated by a Byzantine source-shard, and writing a
+blog post about the attack).  Additionally, if the validator set of the shard is
+not the same as that of the reactor, and shard validators have stake bonded on
+the reactor, an explicit alert mechanism may be used on the reactor to challenge
+the validity of a block and to slash the deposits of offending validators.
 
 ## Inter-blockchain Communication (IBC) ########################################
 
-Now we look at how the hub and shards communicate with each other.  Say that
-there are three blockchains, "Shard1", "Shard2", and "Hub", and we wish for
-"Shard1" to produce a packet destined for "Shard2" going through "Hub". For a
-packet to move from one blockchain to another, a proof must be posted on the
+Now we look at how the reactor and shards communicate with each other.  Say that
+there are three blockchains, "Shard1", "Shard2", and "Reactor", and we wish for
+"Shard1" to produce a packet destined for "Shard2" going through "Reactor". For
+a packet to move from one blockchain to another, a proof must be posted on the
 receiving chain that the sending chain knows about a packet with the appropriate
 destination. For the receiving chain to check the proof, it must keep up with
 the sender's block headers.  The mechanism is similar to that used by
@@ -680,17 +529,18 @@ chain to determine which packets get committed (i.e. acknowledged), while
 allowing for complete freedom on the sending chain as to how many outbound
 packets are allowed.
 
-![Figure of Shard1, Shard2, and Hub IBC without
+![Figure of Shard1, Shard2, and Reactor IBC without
 acknowledgement](https://raw.githubusercontent.com/gnuclear/gnuclear-whitepaper/master/msc/ibc_without_ack.png)
 
-<CAPTION on a figure>
-In the example above, in order to update the block-hash of "Shard1" on "Hub" (or
-of "Hub" on "Shard2"), an `IBCBlockCommitTx` transaction must be posted on "Hub"
-with the block-hash of "Shard1" (or on "Shard2" with the block-hash of "Hub").
+<CAPTION on a figure> In the example above, in order to update the block-hash of
+"Shard1" on "Reactor" (or of "Reactor" on "Shard2"), an `IBCBlockCommitTx`
+transaction must be posted on "Reactor" with the block-hash of "Shard1" (or on
+"Shard2" with the block-hash of "Reactor").
 
-### IBCBlockCommitTx transaction
+### IBCBlockCommitTx Transaction
 
 An `IBCBlockCommitTx` transaction is composed of:
+
 - `ChainID (string)`: The ID of the blockchain
 - `BlockHash ([]byte)`: The block-hash bytes, the Merkle root which includes the
   app-hash
@@ -707,9 +557,10 @@ An `IBCBlockCommitTx` transaction is composed of:
 - `AppHashProof (SimpleProof)`: A SimpleTree Merkle-proof for proving the
   `AppHash` against the `BlockHash`
 
-### IBCPacketTx transaction
+### IBCPacketTx Transaction
 
 An `IBCPacket` is composed of:
+
 - `Header (IBCPacketHeader)`: The packet header
 - `Payload ([]byte)`: The bytes of the packet payload. _Optional_
 - `PayloadHash ([]byte)`: The hash for the bytes of the packet. _Optional_
@@ -719,17 +570,19 @@ Either one of `Payload` or `PayloadHash` must be present.  The hash of an
 An `IBCPacket` without the full payload is called an _abbreviated packet_.
 
 An `IBCPacketHeader` is composed of:
+
 - `SrcChainID (string)`: The source blockchain ID
 - `DstChainID (string)`: The destination blockchain ID
 - `Number (int)`: A unique number for all packets
 - `Status (enum)`: Can be one of `AckPending`, `AckSent`, `AckReceived`,
   `NoAck`, or `Timeout`
-- `Type (string)`: The types are application-dependent.  GnuClear reserves the
+- `Type (string)`: The types are application-dependent.  Gnuclear reserves the
   "coin" packet type
 - `MaxHeight (int)`: If status is not `NoAckWanted` or `AckReceived` by this
   height, status becomes `Timeout`. _Optional_
 
 An `IBCPacketTx` transaction is composed of:
+
 - `FromChainID (string)`: The ID of the blockchain which is providing this
   packet; not necessarily the source
 - `FromBlockHeight (int)`: The blockchain height in which the following packet
@@ -739,20 +592,26 @@ An `IBCPacketTx` transaction is composed of:
 - `PacketProof (IAVLProof)`: A IAVLTree Merkle-proof for proving the packet's
   hash against the `AppHash` of the source chain at given height
 
-The sequence for sending a packet from "Shard1" to "Shard2" through the "Hub" is
-depicted in {Figure X}.  First, an `IBCPacketTx` proves to "Hub" that the packet
-is included in the app-state of "Shard1".  Then, another `IBCPacketTx` proves to
-"Shard2" that the packet is included in the app-state of "Hub".  During this
-procedure, the `IBCPacket` fields are identical: the `SrcChainID` is always
-"Shard1", and the `DstChainID` is always "Shard2".
+The sequence for sending a packet from "Shard1" to "Shard2" through the
+"Reactor" is depicted in {Figure X}.  First, an `IBCPacketTx` proves to
+"Reactor" that the packet is included in the app-state of "Shard1".  Then,
+another `IBCPacketTx` proves to "Shard2" that the packet is included in the
+app-state of "Reactor".  During this procedure, the `IBCPacket` fields are
+identical: the `SrcChainID` is always "Shard1", and the `DstChainID` is always
+"Shard2".
 
 The `PacketProof` must have the correct Merkle-proof path, as follows:
-``` IBC/<SrcChainID>/<DstChainID>/<Number> ``` TODO: CLARIFY
 
-When "Shard1" wants to send a packet to "Shard2" through "Hub", the `IBCPacket`
-data are identical whether the packet is Merkle-ized on "Shard1", the "Hub", or
-"Shard2".  The only mutable field is `Status` for tracking delivery, as shown
-below.
+```
+IBC/<SrcChainID>/<DstChainID>/<Number>
+
+```
+TODO: CLARIFY
+
+When "Shard1" wants to send a packet to "Shard2" through "Reactor", the
+`IBCPacket` data are identical whether the packet is Merkle-ized on "Shard1",
+the "Reactor", or "Shard2".  The only mutable field is `Status` for tracking
+delivery, as shown below.
 
 ### IBC Packet Delivery Acknowledgement
 
@@ -764,16 +623,17 @@ while any destination chain may suffer from a denial-of-service attack with a
 sudden spike in the number of incoming packets.
 
 In these cases, the sender can require delivery acknowledgement by setting the
-intial packet status to `AckPending`.  Then, it is the receiving chain's
+initial packet status to `AckPending`.  Then, it is the receiving chain's
 responsibility to confirm delivery by including an abbreviated`IBCPacket` in the
 app Merkle hash.
 
-![Figure of Shard1, Shard2, and Hub IBC with
+![Figure of Shard1, Shard2, and Reactor IBC with
 acknowledgement](https://raw.githubusercontent.com/gnuclear/gnuclear-whitepaper/master/msc/ibc_with_ack.png)
 
-First, an `IBCBlockCommit` and `IBCPacketTx` are posted on "Hub" that proves the
-existence of an `IBCPacket` on "Shard1".  Say that `IBCPacketTx` has the
+First, an `IBCBlockCommit` and `IBCPacketTx` are posted on "Reactor" that proves
+the existence of an `IBCPacket` on "Shard1".  Say that `IBCPacketTx` has the
 following value:
+
 - `FromChainID`: "Shard1"
 - `FromBlockHeight`: 100 (say)
 - `Packet`: an `IBCPacket`:
@@ -783,13 +643,14 @@ following value:
     - `Number`: 200 (say)
     - `Status`: `AckPending`
     - `Type`: "coin"
-    - `MaxHeight`: 350 (say "Hub" is currently at height 300)
+    - `MaxHeight`: 350 (say "Reactor" is currently at height 300)
   - `Payload`: &lt;The bytes of a "coin" payload&gt;
 
 Next, an `IBCBlockCommit` and `IBCPacketTx` are posted on "Shard2" that proves
-the existence of an `IBCPacket` on "Hub".  Say that `IBCPacketTx` has the
+the existence of an `IBCPacket` on "Reactor".  Say that `IBCPacketTx` has the
 following value:
-- `FromChainID`: "Hub"
+
+- `FromChainID`: "Reactor"
 - `FromBlockHeight`: 300
 - `Packet`: an `IBCPacket`:
   - `Header`: an `IBCPacketHeader`:
@@ -803,8 +664,9 @@ following value:
 
 Next, "Shard2" must include in its app-hash an abbreviated packet that shows the
 new status of `AckSent`.  An `IBCBlockCommit` and `IBCPacketTx` are posted back
-on "Hub" that proves the existence of an abbreviated `IBCPacket` on "Shard2".
-Say that `IBCPacketTx` has the following value:
+on "Reactor" that proves the existence of an abbreviated `IBCPacket` on
+"Shard2".  Say that `IBCPacketTx` has the following value:
+
 - `FromChainID`: "Shard2"
 - `FromBlockHeight`: 400 (say)
 - `Packet`: an `IBCPacket`:
@@ -817,10 +679,11 @@ Say that `IBCPacketTx` has the following value:
     - `MaxHeight`: 350
   - `PayloadHash`: &lt;The hash bytes of the same "coin" payload&gt;
 
-Finally, "Hub" must update the status of the packet from `AckPending` to
+Finally, "Reactor" must update the status of the packet from `AckPending` to
 `AckReceived`.  Evidence of this new finalized status should go back to
 "Shard2".  Say that `IBCPacketTx` has the following value:
-- `FromChainID`: "Hub"
+
+- `FromChainID`: "Reactor"
 - `FromBlockHeight`: 301
 - `Packet`: an `IBCPacket`:
   - `Header`: an `IBCPacketHeader`:
@@ -833,13 +696,32 @@ Finally, "Hub" must update the status of the packet from `AckPending` to
   - `PayloadHash`: &lt;The hash bytes of the same "coin" payload&gt;
 
 Meanwhile, "Shard1" may optimistically assume successful delivery of a "coin"
-packet unless evidence to the contrary is proven on "Hub".  In the example
-above, if "Hub" had not received an `AckSent` status from "Shard2" by block 350,
-it would have set the status automatically to `Timeout`.  This evidence of a
-timeout can get posted back on "Shard1", and any tokens can be returned.
+packet unless evidence to the contrary is proven on "Reactor".  In the example
+above, if "Reactor" had not received an `AckSent` status from "Shard2" by block
+350, it would have set the status automatically to `Timeout`.  This evidence of
+a timeout can get posted back on "Shard1", and any tokens can be returned.
 
-![Figure of Shard1, Shard2, and Hub IBC with acknowledgement and
+![Figure of Shard1, Shard2, and Reactor IBC with acknowledgement and
 timeout](https://raw.githubusercontent.com/gnuclear/gnuclear-whitepaper/master/msc/ibc_with_ack_timeout.png)
+
+## Transactions ################################################################
+
+In the canonical implementation, transactions are streamed to the Gnuclear
+reactor application via the TMSP interface.
+
+### Transaction Types
+
+#### SendTx
+#### BondTx
+#### UnbondTx
+#### SlashTx
+#### BurnQuarkTx
+#### NewProposalTx
+#### VoteTx
+#### IBCBlockCommitTx
+#### IBCPacketTx
+
+### Transaction Gas and Fees
 
 ## Use Cases ###################################################################
 
@@ -847,16 +729,16 @@ timeout](https://raw.githubusercontent.com/gnuclear/gnuclear-whitepaper/master/m
 
 A priveleged shard can act as the source of a pegged token of another
 cryptocurrency. A peg is in essence similar to the relationship between a
-GnuClear hub and shard; both must keep up with the latest blocks of the
+Gnuclear reactor and shard; both must keep up with the latest blocks of the
 other in order to verify proofs that tokens have moved from one to the other.  A
-peg-shard on the GnuClear network keeps up with both the hub as well as the
+peg-shard on the Gnuclear network keeps up with both the reactor as well as the
 other cryptocurrency.  The indirection through the peg-shard allows the logic of
-the hub to remain simple by encapsulating any non-Tendermint consensus
+the reactor to remain simple by encapsulating any non-Tendermint consensus
 light-client verification logic onto the shard.
 
-For instance, a GnuClear shard with some validator set, possibly the same as
-that of the hub, could act as an ether-peg, where the TMSP-application on the
-shard (the "peg-shard") has mechanisms to exchange IBC messages with a
+For instance, a Gnuclear shard with some validator set, possibly the same as
+that of the reactor, could act as an ether-peg, where the TMSP-application on
+the shard (the "peg-shard") has mechanisms to exchange IBC messages with a
 peg-contract on the external Ethereum blockchain (the "target").  This contract
 would allow ether holders to send ether to the peg-shard by sending it to the
 peg-contract on Ethereum.  Once ether is received by the peg-contract, the ether
@@ -864,28 +746,28 @@ cannot be withdrawn unless an appropriate IBC packet is received by the
 peg-contract from the peg-shard. When a peg-shard receives an IBC packet proving
 that ether was received in the peg-contract for a particular Ethereum account, a
 corresponding account is created on the peg-shard with that balance.  Ether on
-the peg-shard ("pegged-ether") can then be transferred to and from the hub, and
-later be destroyed with a transaction that sends it to a particular withdrawal
-address on Ethereum; an IBC packet proving that the transaction occured on the
-peg-shard can be posted to the Ethereum peg-contract to allow the ether to be
-withdrawn.
+the peg-shard ("pegged-ether") can then be transferred to and from the reactor,
+and later be destroyed with a transaction that sends it to a particular
+withdrawal address on Ethereum; an IBC packet proving that the transaction
+occured on the peg-shard can be posted to the Ethereum peg-contract to allow the
+ether to be withdrawn.
 
 Of course, the risk of such a pegging contract is a rogue validator set.  ⅓+
 Byzantine validators could cause a fork, withdrawing ether from the peg-contract
-on Ethereum while keeping the pegged-ether on the peg-shard. Worse, +⅔
-Byzantine validators can steal ether outright from those who sent it to the
-peg-contract by deviating from the original pegging logic of the peg-shard.
+on Ethereum while keeping the pegged-ether on the peg-shard. Worse, +⅔ Byzantine
+validators can steal ether outright from those who sent it to the peg-contract
+by deviating from the original pegging logic of the peg-shard.
 
 It is possible to address these issues by designing the peg to be "totally
-accountable".  For example, all IBC packets both from the hub as well as from
-the target might require acknowledgement by the peg-shard in such a way that all
-state transitions of the peg-shard can be efficiently challenged and verified by
-either the hub or the target.  The hub and the target (or in the case of
-Ethereum, the peg-contract) should allow the peg-shard validators to post
-collateral, and token transfers out of the peg-contract should be delayed (and
-collateral unbonding period sufficiently long) to allow for any challenges to be
-made.  We leave the design of the specification and implementation of this
-system open as a future GnuClear improvement proposal.
+accountable".  For example, all IBC packets both from the reactor as well as
+from the target might require acknowledgement by the peg-shard in such a way
+that all state transitions of the peg-shard can be efficiently challenged and
+verified by either the reactor or the target.  The reactor and the target (or in
+the case of Ethereum, the peg-contract) should allow the peg-shard validators to
+post collateral, and token transfers out of the peg-contract should be delayed
+(and collateral unbonding period sufficiently long) to allow for any challenges
+to be made.  We leave the design of the specification and implementation of this
+system open as a future Gnuclear improvement proposal.
 
 While the socio-political atmosphere is not quite evolved enough yet, we can
 extend the mechanism to allow for shards which peg to the fiat currency of a
@@ -897,8 +779,8 @@ large group of trusted notaries and institutions.
 
 A result of this integration would be, for instance, the ability of anyone with
 a bank account at a participating bank to move dollars from their bank account,
-which is on the shard, to other accounts on the shard, or to the hub, or to
-another shard entirely.  In this regard, GnuClear can act as a seamless conduit
+which is on the shard, to other accounts on the shard, or to the reactor, or to
+another shard entirely.  In this regard, Gnuclear can act as a seamless conduit
 between fiat currencies and cryptocurrencies.
 
 ### Ethereum Scaling
@@ -910,7 +792,7 @@ Ethereum nodes process every single transaction and also stores all the state.
 Since Tendermint can commit blocks much faster than Ethereum's proof-of-work,
 EVM shards powered by Tendermint consensus and operating on pegged-ether can
 provide higher performance to Ethereum blockchains.  Additionally, though the
-GnuClear hub and IBC packet mechanics does not allow for arbitrary contract
+Gnuclear reactor and IBC packet mechanics does not allow for arbitrary contract
 logic execution per se, it can be used to co-ordinate Ethereum contracts running
 on different shards, providing a foundation for generalized Ethereum scaling via
 sharding.  For example, asynchronous contract calls that "send an action" and
@@ -919,28 +801,28 @@ packets going in opposite directions.
 
 ### Multi-Application Integration
 
-GnuClear shards run arbitrary application logic, defined at the beginning of the
+Gnuclear shards run arbitrary application logic, defined at the beginning of the
 shard's life, and potentially updated over time by governance. Such flexibility
-allows GnuClear shards to act as pegs to other cryptocurrencies, like Ethereum
+allows Gnuclear shards to act as pegs to other cryptocurrencies, like Ethereum
 or Bitcoin, but it also permits derlivatives of those blockchains, utilizing the
 same codebase but a different validator set and history. This allows many
-existing cryptocurrency frameworks, such as that of Ethereum, ZCash, Bitcoin,
+existing cryptocurrency frameworks, such as that of Ethereum, Zerocash, Bitcoin,
 CryptoNote, and so on to be used with a higher performance consensus engine on a
 common network, openning tremendous opportunity for interoperability across
 platforms.  Furthermore, as a multi-asset blockchain, a single transaction may
 contain multiple inputs and outputs, where each input can be any token type,
-enabling GnuClear to serve directly as a platform for decentralized exchange,
+enabling Gnuclear to serve directly as a platform for decentralized exchange,
 though orders are assumed to be matched via other platforms. Alternatively, a
 shard can serve as a fault-tolerant exchange, including hosting the orderbook,
 openning up new business opportunities for blockchain backed exchanges, which
-may themselves trade liquidity over the GnuClear network.
+may themselves trade liquidity over the Gnuclear network.
 
 Shards can also serve as blockchain-backed versions of enterprise and government
 systems, where pieces of a particular service, traditionally run by an
 organization or group of organizations, are instead run as a TMSP application on
 a certain shard, allowing it to inherit the security and interoperability of the
-public GnuClear network, without sacrificing control over the underlying
-service.  Thus, GnuClear may be a best of both worlds for organizations looking
+public Gnuclear network, without sacrificing control over the underlying
+service.  Thus, Gnuclear may be a best of both worlds for organizations looking
 to utilize blockchain technology that are wary of relinquishing control to an
 unidentified set of miners.
 
@@ -948,8 +830,8 @@ unidentified set of miners.
 
 A major problem with consistency favouring consensus algorithms like Tendermint
 is thought to be that any network partition which causes there to be no single
-partition with +⅔ validators will halt consensus altogether. The GnuClear
-architecture can mitigate this problem by using a global hub with regional
+partition with +⅔ validators will halt consensus altogether. The Gnuclear
+architecture can mitigate this problem by using a global reactor with regional
 autonomous shards, where +⅔ validators in a shard are based in a common
 geographic region. For instance, a common paradigm may be for individual cities,
 or regions, to operate a given shard for the coordination of finances and
@@ -958,39 +840,88 @@ otherwise remote service providers fail.  Note that this allows real geological,
 political, and network-topological features to be considered in designing robust
 federated fault-tolerant systems.
 
+### Federated Name Resolution System
+
+NameCoin was one of the first blockchains to attempt to solve the
+name-resolution problem by adapting the Bitcoin blockchain.  Unfortunately there
+have been several issues with this approach.
+
+With Namecoin, we can verify that say, <em>@satoshi</em> was registered with a
+particular public key at some point in the past, but we wouldn’t know whether
+the public key had since been updated recently unless we download all the blocks
+since the last update of that name.  This is due to the limitation of Bitcoin's
+UTXO transaction Merkle-ization model where only the transactions (but not
+mutable application state) is Merkle-ized into the block-hash -- which lets us
+prove existence, but not the non-existence of updates.  Thus, we can't know for
+certain the most recent value of a name without trusting a full node, or
+incurring significant costs in bandwidth.
+
+Even if a Merkle-ized search tree were implemented in NameCoin, its dependency
+on proof-of-work makes light client verification problematic. Light clients must
+download a complete copy of the headers for all blocks in the entire blockchain
+(or at least all the headers since the last update to a name).  This means that
+the bandwidth requirements scale linearly with the amount of time [\[21\]][21].
+
+With Tendermint, all we need is the most recent block-hash signed by a quorum of
+validators, and a Merkle proof to the current value associated with the name.
+This makes it possible to have an efficient and secure light-client verification
+of _the current value of_ a name.
+
+On Gnuclear, we can take this concept and extend it further. Each
+name-registration shard in Gnuclear can have an associated top-level-domain
+(TLD) name such as ".com" or ".org", and each name-registration shard can have
+its own governance and registration rules.
+
+TODO: note on integration with shard discovery, see roadmap
+
 ## Issuance and Incentives #####################################################
 
-### The Gnut Token
+### The Quark Token
 
-While the GnuClear hub is a multi-asset system, there is a native token called
-_gnuts_.  Unlike Ethereum's ether or Bitcoin's bitcoins, GnuClear's gnuts are
-meant for staking by validators, and voting on proposals to improve and maintain
-the GnuClear network.  To discourage the use of gnuts as a store-of-wealth or
-means of exchange, gnuts that are not held in bond decay at a rate of
-`GnutDecay` (DEFAULT: a half-life of 5 years).  Gnut holders who do not wish to
-validate, or cannot because they do not meet the bonding threshold can delegate
-to any combination of existing validators.  Gnut holders who delegate to
-validators do not pay the decay penalty.
+While the Gnuclear reactor is a multi-asset system, there is a native token
+called _quarks_.  Quarks are the only staking token of Gnuclear.  Quarks are a
+license for the holder to vote, validate, or delegate to other validators.  Like
+Ethereum's ether, quarks are also used to pay for transaction fees to mitigate
+spam.  Additional quarks are issued to validators and those who delegate to
+validators.
 
-### Initial Gnut Distribution and Issuance
+The initial distribution of quark tokens and validators on Genesis will go to
+the funders of the Gnuclear crowdsale (80%), and the Gnuclear foundation (20%).
+From genesis onward, 30% of the initial quark distribution will be rewarded to
+active validators and delegators.
 
-The initial distribution of gnut tokens and validators on Genesis will be
-composed of a list of publicly identifiable validators who have already
-contributed toward cryptocurrency, blockchain, and distributed systems research
-and praxis, including research groups, nonprofit foundations, and exchanges.
-These genesis validators will be incentivized to continue validating, by virtue
-of a vesting schedule.  All of the initial bonded gnuts of the validators on
-genesis day will vest on a block-by-block basis over a period of 4 years.
-Unvested gnuts can be used to the full extent for voting, but disappears after
-unbonding.  It follows that gnuts cannot be transferred until vested.  There
-will be a total of 67 total validator spots with 200,000 vesting gnuts each,
-where each validating entity may be allocated one or more validator spots.
+The `BurnQuarkTx` transaction can be used to recover any proportionate amount of
+tokens from the reserve pool.
 
-In addition to the 67 * 200,000 vesting gnuts by the genesis validators, there
-will also be 21,474 gnuts that are issued through Bitcoin every week for 52\*6
-weeks.  Bitcoin accounts that send bitcoins to either the `GnuClearBurnAddress`
-or `GnuClearFoundationAddress` will receive the 21474 gnuts in proportion to the
-amount of bitcoins burned or donated.
+#### Crowdfund
+
+16,000,000 quarks will be sold in an Ethereum-style crowdsale. The crowdsale
+will last 42 days, in which the first 14 days will have the best price, and the
+purchasing power will decrease linearly to 2/3 of the initial purchasing power
+in the following 28 days.  The price will be determined by dividing 16,000,000
+by the total effective purchasing power of all the bids.
+
+#### Gnuclear Foundation
+
+The Gnuclear foundation is an external entity that is hired to develop the
+Gnuclear network.  Quark holders can vote to change the foundation by changing
+the `GnuclearFoundationAddress` parameter.  This foundation will have 4,000,000
+quarks, of which 1,200,000 are pre-vested, and the rest will vest over a period
+of 4 years, all of which can be used to the full extent for voting.
+
+#### Gnuclear Reactor Block Reward
+
+Every block rewards all the active validators and delegators in proportion to
+their bonded quarks (before commissions).  There will be roughly 6,000,000
+quarks rewarded every year, forever.  The number is not exact, because the
+number of blocks per year is not exact.  As with transaction fees, delegators
+pay the delegated validator a commission of 10%.
+
+#### Incentivizing Hackers
+
+TODO: Note about automatic bounties for hackers, to incentivize hackers to
+publish evidence (like capture-the-flag) that rewards some of the validator's
+quarks to the hacker, and burns some as well.
 
 ### Limitations on the Number of Validators
 
@@ -1022,18 +953,18 @@ Year 10: 300
 
 ### Becoming a Validator After Genesis Day
 
-Gnut holders who are not already validators can become one by signing and
-submitting a `BondTx` transaction.  The amount of gnuts provided as
-collateral must be nonzero.  Anyone can become a validator at any
-time, except when the size of the current validator set is greater than the
-maximum number of validators allowed.  In that case, the transaction is only
-valid if the amount of gnuts is greater than the amount of effective gnuts held
-by the smallest validator, where effective gnuts include vesting and delegated
-gnuts.  When a new validator replaces an existing validator in such a way, the
-existing validator becomes inactive and all the gnuts and delegated gnuts enter
-the unbonding state.  Note that, given the distribution of genesis validators,
-the 33 available validator spots, and the issuance schedule, it is impossible
-for any genesis validators to become unbonded by this mechanism.
+Quark holders who are not already validators can become one by signing and
+submitting a `BondTx` transaction.  The amount of quarks provided as collateral
+must be nonzero.  Anyone can become a validator at any time, except when the
+size of the current validator set is greater than the maximum number of
+validators allowed.  In that case, the transaction is only valid if the amount
+of quarks is greater than the amount of effective quarks held by the smallest
+validator, where effective quarks include vesting and delegated quarks.  When a
+new validator replaces an existing validator in such a way, the existing
+validator becomes inactive and all the quarks and delegated quarks enter the
+unbonding state.  Note that, given the distribution of genesis-validators, the
+33 available validator spots, and the issuance schedule, it is impossible for
+any genesis-validators to become unbonded by this mechanism.
 
 ### Penalties for Validators
 
@@ -1056,48 +987,52 @@ blockchain. In these cases, the validators can coordinate out of band to force
 the timeout of these malicious validators, if there is a supermajority
 consensus.
 
-In situations where the GnuClear hub halts due to a ⅓+ coalition of validators
-going offline, or in situations where a ⅓+ coalition of validators censor
-evidence of malicious behavior from entering the blockchain, as long as there
-are -½ such Byzantine validators, the hub will recover with a reorg-proposal.
-(Link to "Forks and Censorship Attacks").
+In situations where the Gnuclear reactor halts due to a ⅓+ coalition of
+validators going offline, or in situations where a ⅓+ coalition of validators
+censor evidence of malicious behavior from entering the blockchain, as long as
+there are -½ such Byzantine validators, the reactor will recover with a
+reorg-proposal.  (Link to "Forks and Censorship Attacks").
 
 ### Transaction Fees
 
-GnuClear validators can accept any token type or combination of types as a fee
+Gnuclear validators can accept any token type or combination of types as a fee
 for processing a transaction.  Each validator can subjectively set whatever
 exchange rate it wants, and choose whatever transactions it wants, as long as
 the `BlockGasLimit` is not exceeded.  The collected fees minus any taxes
 specified below are redistributed to the holders of bonded gnu tokens,
 proportionately, every `ValidatorPayoutPeriod` blocks.
 
-Of the collected transaction fees, `ReserveTaxRatio` (DEFAULT 2%) will go toward
-the reserve pool to increase the reserve pool and increase the security and
-value of the GnuCler network.  Also, a `CommonsTaxRatio` (DEFAULT 3%) will go
-toward the funding of common goods.  These funds will go to the
-`CustodianAddress` to be distributed in accordance with whatever is decided by
-the governance system.
+Of the collected transaction fees, `ReserveTax` (DEFAULT 2%) will go toward the
+reserve pool to increase the reserve pool and increase the security and value of
+the GnuCler network.  Also, a `CommonsTax` (DEFAULT 3%) will go toward the
+funding of common goods.  These funds will go to the `CustodianAddress` to be
+distributed in accordance with whatever is decided by the governance system.
 
-Gnut holders who delegate their voting power to other validators pay
-`DelegationCommision` (DEFAULT 15%) to the delegated validator.
+Quark holders who delegate their voting power to other validators pay 10%
+commission to the delegated validator.
 
 ## Governance ##################################################################
 
-The GnuClear hub blockchain is a distributed organization that requires a
+The Gnuclear reactor blockchain is a distributed organization that requires a
 well defined governance mechanism in order to coordinate various changes to the
 blockchain, such as the validator set, predefined parameters of the system, as
 well as software and wetware protocol upgrades.
 
-All gnut holders are responsible for voting on all proposals.  Failing to vote
-on a proposal in a timely manner will result in the gnut holder losing
-`AbsenteeismPenalty` (DEFAULT 0.5%) of its gnuts at most once per
+_TODO: Remove AbsenteeismPenalty: This will go away, and we'll either create an
+artificial incentive for voting, or, we'll say that only the validators and the
+delegators' votes count, and specify how delegators can override the validator's
+vote._
+
+All quark holders are responsible for voting on all proposals.  Failing to vote
+on a proposal in a timely manner will result in the quark holder losing
+`AbsenteeismPenalty` (DEFAULT 0.5%) of its quarks at most once per
 `AbsenteeismPenaltyWindow` (DEFAULT 1 week) time period.
 
 Each proposal requires a deposit of `MinimumProposalDeposit` tokens, which may
-be a combination one or more tokens include gnuts.  For each proposal, the voter
-may vote to take the deposit. If more than half of the voters choose to take the
-deposit (e.g. because the proposal was spam), the deposit goes to the reserve
-pool, except any gnuts which are burned.
+be a combination one or more tokens include quarks.  For each proposal, the
+voter may vote to take the deposit. If more than half of the voters choose to
+take the deposit (e.g. because the proposal was spam), the deposit goes to the
+reserve pool, except any quarks which are burned.
 
 For each proposal, voters may vote with the following options:
 
@@ -1113,12 +1048,12 @@ required for the proposal to be decided as accepted (or decided as failed), but
 majority is vetoed, everyone gets punished by losing `VetoPenaltyFeeBlocks`
 (DEFAULT 1 day's worth of blocks) worth of fees (except taxes which will not be
 affected), and the party that vetoed the majority decision will be additionally
-punished by losing `VetoPenaltyGnuts` (DEFAULT 0.1%) of its gnuts.
+punished by losing `VetoPenaltyQuarks` (DEFAULT 0.1%) of its quarks.
 
 ### Parameter Change Proposal
 
-Any of the parameters defined here can be changed with the acceptance of
-a `ParameterChangeProposal`.
+Any of the parameters defined here can be changed with the acceptance of a
+`ParameterChangeProposal`.
 
 ### Text Proposal
 
@@ -1127,46 +1062,247 @@ coordinated via the generic `TextProposal`.
 
 ## Roadmap #####################################################################
 
-* Initial validator set
-* Shard discovery
-* Tendermint V2
+* Decide on genesis-validators
+* Decide on crowdfund event details
+* Address shard attributes and discovery
+* Launch Gnuclear crowdfunding event
+* Develop Gnuclear and Tendermint
+* Develop EVM shards
+* Develop CryptoNote(\?) shard
+* Launch Gnuclear blockchain
+* Develop Tendermint V2
+* ...
+
+## Related Work ################################################################
+
+There have been many innovations in blockchain consensus and scalability in the
+past couple of years.  This section provides a brief survey of a select number
+of important ones.
+
+### Consensus Systems
+
+#### Classic Byzantine Fault Tolerance
+
+Consensus in the presence of malicious participants is a problem dating back to
+the early 80s, when Leslie Lamport coined the phrase "Byzantine fault" to refer
+to arbitrary process behavior that deviates from the intended behavior, in
+contrast to a "crash fault", wherein a process simply crashes.  Early solutions
+were discovered for synchronous networks where there is an upper bound on
+message latency, though pratical use was limited to highly controlled
+environments such as airplane controllers and datacenters synchronized via
+atomic clocks.  It was not until the late 90s that Practical Byzantine Fault
+Tolerance (PBFT) [\[11\]][11] was introduced as an efficient partially
+synchronous consensus algorithm able to tolerate up to ⅓ of processes behaving
+arbitrarily.  PBFT became the standard algorithm, spawning many variations,
+including most recently by IBM as part of their contribution to Hyperledger.
+
+The main benefit of Tendermint consensus over PBFT is that Tendermint has an
+improved and simplified underlying structure, some of which is a result of
+embracing the blockchain paradigm.  Tendermint blocks must commit in order,
+which obviates the complexity and communication overhead associated with PBFT's
+view-changes.  In Gnuclear and many cryptocurrencies, there is no need to allow
+for block <em>N+i</em> where <em>i >= 1</em> to commit, when block <em>N</em>
+itself hasn't yet committed. If bandwidth is the reason why block <em>N</em>
+hasn't committed in Gnuclear, then it doesn't help to use bandwidth sharing
+votes for blocks <em>N+i</em>. If a network partition or offline nodes is the
+reason why block <em>N</em> hasn't committed, then <em>N+i</em> won't commit
+anyway.
+
+In addition, the batching of transactions into blocks allows for regular
+Merkle-hashing of the application state, rather than periodic digests as with
+PBFT's checkpointing scheme.  This allows for faster provable transaction
+commits for light-clients and faster inter-blockchain communication.
+
+Tendermint Core also includes many optimizations and features that go above and
+beyond what is specified in PBFT.  For example, the blocks proposed by
+validators are split into parts, Merkle-ized, and gossipped in such a way that
+improves broadcasting performance (see LibSwift [\[19\]][19] for inspiration).
+Also, Tendermint Core doesn't make any assumption about point-to-point
+connectivity, and functions for as long as the P2P network is weakly connected.
+
+#### BitShares delegated stake
+
+While not the first to deploy proof-of-stake (PoS), BitShares [\[12\]][12]
+contributed considerably to research and adoption of PoS blockchains,
+particularly those known as "delegated" PoS.  In BitShares, stake holders elect
+"witnesses", responsible for ordering and committing transactions, and
+"delegates", responsible for co-ordinating software updates and parameter
+changes.  Though BitShares achieves high performance (100k tx/s, 1s latency) in
+ideal conditions, it is subject to double spend attacks by malicious witnesses
+which fork the blockchain without suffering an explicit economic punishment --
+it suffers from the "nothing-at-stake" problem. BitShares attempts to mitigate
+the problem by allowing transactions to refer to recent block-hashes.
+Additionally, stakeholders can remove or replace misbehaving witnesses on a
+daily basis, though this does nothing to explicitly punish a double-spend attack
+that was successful.
+
+#### Stellar
+
+Building on an approach pioneered by Ripple, Stellar [\[13\]][13] refined a
+model of Federated Byzantine Agreement wherein the processes participating in
+consensus do not constitute a fixed and globally known set.  Rather, each
+process node curates one or more "quorum slices" each constituting a set of
+trusted processes. A "quorum" in Stellar is defined to be a set of nodes that
+contain (is a superset of) at least one quorum slice for each node in the set,
+such that agreement can be reached.
+
+The security of the Stellar mechanism relies on the assumption that the
+intersection of *any* two quorums is non-empty, while the availability of a node
+requires at least one of its quorum slices to consist entirely of correct nodes,
+creating a trade-off between using large or small quorum-slices that may be
+difficult to balance without imposing significant assumptions about trust.
+Ultimately, nodes must somehow choose adequate quorum slices for there to be
+sufficient fault-tolerance (or any "intact nodes" at all, of which much of the
+results of the paper depend on), and the only provided strategy for ensuring
+such a configuration is heirarchical and similar to the Border Gateway Protocol
+(BGP), used by top-tier ISPs on the internet to establish global routing tables,
+and by that used by browsers to manage TLS certificates; both notorious for
+their insecurity.
+
+The criticism in the Stellar paper of the Tendermint-based proof-of-stake
+systems is mitigated by the token strategy described here, wherein a new type of
+token called the _quark_ is issued that represent claims to future portions of
+fees and rewards. The advantage of Tendermint-based proof-of-stake, then, is its
+relative simplicity, while still providing sufficient, and provable security
+guarantees.
+
+#### BitcoinNG
+
+BitcoinNG is a proposed improvement to Bitcoin that would allow for forms of
+vertical scalability, such as increasing the block size, without the negative
+economic consequences typically associated with such a change, such as the
+disproportionately large impact on small miners.  This improvement is achieved
+by separating leader election from transaction broadcast: leaders are first
+elected by proof-of-work in "micro-blocks", and then able to broadcast
+transactions to be committed until a new micro-block is found. This reduces the
+bandwidth requirements necessary to win the PoW race, allowing small miners to
+more fairly compete, and allowing transactions to be committed more regularly by
+the last miner to find a micro-block.
+
+#### Casper
+
+Casper [\[16\]][16] is a proposed proof-of-stake consensus algorithm for
+Ethereum.  Its prime mode of operation is "consensus-by-bet".  The idea is that
+by letting validators iteratively bet on which block it believes will become
+committed into the blockchain based on the other bets that it's seen so far,
+finality can be achieved eventually.
+[link](https://blog.ethereum.org/2015/12/28/understanding-serenity-part-2-casper/).
+This is an active area of research by the Casper team.  The challenge is in
+constructing a betting mechanism that can be proven to be an evolutionarily
+stable strategy.  The main benefit of Casper as compared to Tendermint may be in
+offering "availability over consistency" -- consensus does not require a +⅔
+quorum from the validators -- perhaps at the cost of commit speed or
+implementation complexity.
+
+### Sharded Scaling
+
+#### Interledger Protocol
+
+The Interledger protocol [\[14\]][14] is not strictly a scalability solution. It
+provides an adhoc interoperation between different ledger systems through a
+loosely coupled bilateral relationship network.  Like the Lightning Network, the
+purpose of ILP is to facilitate payments, but it specifically focuses on
+payments across disparate ledger types, and extends the atomic transaction
+mechanism to include not only hash-locks, but also a quroum of notaries (called
+the Atomic Transport Protocol).  The latter mechanism for enforcing atomicity in
+inter-ledger transactions is similar to Tendermint's light-client SPV echanism,
+so an illustration of the distinction between ILP and Gnuclear/IBC is warranted,
+and provided below.
+
+1. The notaries of a connector in ILP does not support membership changes, and
+   does not allow for flexible weighting between notaries.  On the other hand,
+IBC is designed specifically for blockchains, where validators can have
+different weights, and where membership can change over the course of the
+blockchain.
+
+2. As in the Lightning Network, the receiver of payment in ILP must online to
+   send a confirmation back to the sender.  In a token transfer over IBC, the
+validator-set of the receiver's blockchain is responsible for providing
+confirmation, not the receiving user.
+
+3. The most striking difference is that ILP's connectors are not responsible or
+   keeping authoritative state about payments, whereas in Gnuclear, the
+validators of the Gnuclear reactor are the authority of the state of IBC token
+transfers as well as the authority of the amount of tokens held by each shard
+(but not the amount of tokens held by each account within a shard).  This is he
+fundamental innovation that allows for secure asymmetric tranfer of tokens from
+shard to shard; the analog to ILP's connector in Gnuclear is a persistent and
+maximally secure blockchain ledger.
+
+4. The inter-ledger payments in ILP need to be backed by an exchange orderbook,
+   as there is no asymmetric transfer of coins from one ledger to another, only
+the transfer of value or market equivalents.
+
+#### Sidechains
+
+Sidechains [\[15\]][15] are a proposed mechanism for scaling the Bitcoin network
+via alternative blockchains that are "pegged" to the Bitcoin blockchain.
+Sidechains allow bitcoins to effectively move from the Bitcoin blockchain to the
+sidechain and back, and allow for experimentation in new features on the
+sidechain.  The mechanism, known as a two-way peg, uses the standard Simple
+Payment Verification (SPV) used by Bitcoin light clients, where proof of a
+sufficiently long chain of block headers containing a particular transaction
+serves as evidence for the existence of the transaction. Each chain in the peg
+serves as a light client of the other, using SPV proofs to determine when coins
+should be transferred across the peg and back.  Of course, since Bitcoin uses
+proof-of-work, Bitcoin sidechains suffer from the many risks of proof-of-work as
+a consensus mechanism, which are particularly exacerbated in a scalability
+context. That said, the core mechanism of the two-way peg is in principle the
+same as that employed by the Gnuclear network, though using a consensus
+algorithm that scales more securely.
+
+#### Ethereum Scalability Efforts
+
+Ethereum is currently researching a number of different strategies to shard the
+state of the Ethereum blockchain to address scalability needs. These efforts
+have the goal of maintaining the abstraction layer offered by the current
+Ethereum Virtual Machine across the shared state space. Research efforts are
+being conducted by the Ethereum Foundation under Serenity, the Consensys
+organizations and the Dfinity project. [\[18\]][18]
+
+### General Scaling
+
+#### Lightning Network
+
+The Lightning Network is a proposed message relay network operating at a layer
+above the Bitcoin blockchain, enabling many orders of magnitude improvement in
+transaction throughput by moving the majority of transactions outside of the
+consensus ledger into so-called "payment channels". This is made possible by
+on-chain cryptocurrency scripts, which enables parties to enter into stateful
+contracts where the state can be updated by sharing digital signatures, and
+contracts can be closed by finally publishing evidence onto the blockchain, a
+mechanism first popularized by cross-chain atomic swaps.  By openning payment
+channels with many parties, participants in the Lightning Network can become
+focal points for routing the payments of others, leading to a fully connected
+payment channel network, at the cost of capital being tied up on payment
+channels.
+
+While the Lightning Network can also easily extend across multiple independent
+blockchains to allow for the transfer of _value_ via an exchange market, it
+cannot be used to assymetrically transfer _tokens_ from one blockchain to
+another.  The main benefit of the Gnuclear network described here is to enable
+such direct token transfers.  That said, we expect payment channels and the
+Lightning Network to become widely adopted along with our token transfer
+mechanism, for cost-saving and privacy reasons.
+
+#### Segregated Witness
+
+Segregated Witness is a Bitcoin improvement proposal
+[link](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki) that aims
+to increase the per-block tranasction throughput 2X or 3X, while simultaneously
+making block syncing faster for new nodes.  The brilliance of this solution is
+in how it works within the limitations of Bitcoin's current protocol and allows
+for a soft-fork upgrade (i.e. clients with older versions of the software will
+continue to function after the upgrade).  Tendermint being a new protocol has no
+design restrictions, so it has a different scaling priorities.  Primarily,
+Tendermint uses a BFT round-robin algorithm based on cryptographic signatures
+instead of mining, which trivially allows horizontal scaling through multiple
+parallel blockchains, while regular, more frequent block commits allow for
+vertical scaling as well.
 
 <hr/>
 
-## Citations ###################################################################
-
-TODO: Link throughout text as appropriate
-
-* Bitcoin: https://bitcoin.org/bitcoin.pdf
-* BitcoinNG: https://arxiv.org/pdf/1510.02037v2.pdf
-* PBFT: http://pmg.csail.mit.edu/papers/osdi99.pdf
-* BitShares: https://bitshares.org/technology/delegated-proof-of-stake-consensus/
-* Stellar: https://www.stellar.org/papers/stellar-consensus-protocol.pdf
-* BigchainDB: https://www.bigchaindb.com/whitepaper/bigchaindb-whitepaper.pdf
-* Lightning Network: https://lightning.network/lightning-network-paper-DRAFT-0.5.pdf
-* Segregated Witness: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
-* Sidechains: https://blockstream.com/sidechains.pdf
-* Casper: https://blog.ethereum.org/2015/08/01/introducing-casper-friendly-ghost/
-* Tendermint: https://github.com/tendermint/tendermint/wiki
-* TMSP: https://github.com/tendermint/tmsp
-* Ethereum: http://gavwood.com/paper.pdf
-* Ethereum Sharding: https://github.com/ethereum/EIPs/issues/53
-
-Unsorted links:
-* https://www.docdroid.net/ec7xGzs/314477721-ethereum-platform-review-opportunities-and-challenges-for-private-and-consortium-blockchains.pdf.html
-
-Needed links:
-* FLP impossibility
-
 ## Appendix ####################################################################
-
-### Gas Fees for Transactions
-
-* IBCBlockCommitTx
-* IBCPacketTx
-* SendTx
-* NewProposalTx
-* VoteTx
 
 ### TMSP specification
 
@@ -1238,7 +1374,7 @@ connection, or Key="mode", Value="consensus" for a consensus connection.
 
 #### InitChain
   * __Arguments__:
-    * `Validators ([]Validator)`: Initial genesis validators
+    * `Validators ([]Validator)`: Initial genesis-validators
   * __Usage__:<br/>
     Called once upon genesis
 
@@ -1258,18 +1394,128 @@ connection, or Key="mode", Value="consensus" for a consensus connection.
     Signals the end of a block.  Called prior to each Commit after all
 transactions
 
-### Merkle tree & proof specification
+### Merkle Tree & Proof Specification
 
-* SimpleTree
-* IAVLTree
-* Proof Expression langauge
+There are two types of Merkle trees supported in the Tendermint/Gnuclear
+ecosystem: The Simple Tree, and the IAVL+ Tree.
+
+### Simple Tree
+
+The Simple Tree is a Merkle tree for a static list of elements.  If the number
+of items is not a power of two, some leaves will be at different levels.  Simple
+Tree tries to keep both sides of the tree the same height, but the left may be
+one greater.  This Merkle tree is used to Merkle-ize the transactions of a
+block, and the top level elements of the application state root.
+
+```
+                *
+               / \
+             /     \
+           /         \
+         /             \
+        *               *
+       / \             / \
+      /   \           /   \
+     /     \         /     \
+    *       *       *       h6
+   / \     / \     / \
+  h0  h1  h2  h3  h4  h5
+
+  A SimpleTree with 7 elements
+```
+
+## IAVL+ Tree
+
+The purpose of the IAVL+ data structure is to provide persistent storage for
+key-value pairs in the application state such that a deterministic Merkle root
+hash can be computed efficiently.  The tree is balanced using a variant of the
+[AVL algortihm](http://en.wikipedia.org/wiki/AVL_tree), and all operations are
+O(log(n)).
+
+In an AVL tree, the heights of the two child subtrees of any node differ by at
+most one.  Whenever this condition is violated upon an update, the tree is
+rebalanced by creating O(log(n)) new nodes that point to unmodified nodes of the
+old tree.  In the original AVL algorithm, inner nodes can also hold key-value
+pairs.  The AVL+ algorithm (note the plus) modifies the AVL algorithm to keep
+all values on leaf nodes, while only using branch-nodes to store keys.  This
+simplifies the algorithm while keeping the merkle hash trail short.
+
+The AVL+ Tree is analogous to Ethereum's [Patricia
+tries](http://en.wikipedia.org/wiki/Radix_tree).  There are tradeoffs.  Keys do
+not need to be hashed prior to insertion in IAVL+ trees, so this provides faster
+ordered iteration in the key space which may benefit some applications.  The
+logic is simpler to implement, requiring only two types of nodes -- inner nodes
+and leaf nodes.  The Merkle proof is on average shorter, being a balanced binary
+tree.  On the other hand, the Merkle root of an IAVL+ tree depends on the order
+of updates.
+
+TODO Replace with Ethereum's Patricia Trie if there is a binary variant.
+
+#### Merkle Proof Path Expression
+
+TODO
 
 ## Acknowledgements ############################################################
 
 We thank our friends and peers for assistance in conceptualizing, reviewing, and
-providing support for our work with Tendermint and GnuClear.
+providing support for our work with Tendermint and Gnuclear.
 
-* Zaki Manian of SkyChain provided much of the wording under the TMSP section.
-* Jehan Tremback of Althea and Dustin Byington for helping with initial
-  iterations
+* [Zaki Manian](https://github.com/zmanian) of
+  [SkuChain](https://www.skuchain.com/) provided much help in formatting and
+wording, especially under the TMSP section
+* [Jehan Tremback](https://github.com/jtremback) of Althea and Dustin Byington
+  for helping with initial iterations
+* [Andrew Miller](http://soc1024.com/) for feedback on consensus
+* Also thanks to [Bill Gleim](https://github.com/gleim) for various
+  contributions.
 * TODO Your name and organization here if you want.
+
+## Citations ###################################################################
+
+[1]: https://bitcoin.org/bitcoin.pdf
+[2]: http://zerocash-project.org/paper
+[3]: https://github.com/ethereum/wiki/wiki/White-Paper
+[4]: https://download.slock.it/public/DAO/WhitePaper.pdf
+[5]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+[6]: https://arxiv.org/pdf/1510.02037v2.pdf
+[7]: https://lightning.network/lightning-network-paper-DRAFT-0.5.pdf
+[8]: https://github.com/tendermint/tendermint/wiki
+[9]: https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf
+[10]: https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/
+[11]: http://pmg.csail.mit.edu/papers/osdi99.pdf
+[12]: https://bitshares.org/technology/delegated-proof-of-stake-consensus/
+[13]: https://www.stellar.org/papers/stellar-consensus-protocol.pdf
+[14]: https://interledger.org/rfcs/0001-interledger-architecture/
+[15]: https://blockstream.com/sidechains.pdf
+[16]: https://blog.ethereum.org/2015/08/01/introducing-casper-friendly-ghost/
+[17]: https://github.com/tendermint/tmsp
+[18]: https://github.com/ethereum/EIPs/issues/53
+[19]: http://www.ds.ewi.tudelft.nl/fileadmin/pds/papers/PerformanceAnalysisOfLibswift.pdf
+[20]: http://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
+[21]: https://en.bitcoin.it/wiki/Thin_Client_Security
+
+* [1] Bitcoin: https://bitcoin.org/bitcoin.pdf
+* [2] ZeroCash: http://zerocash-project.org/paper
+* [3] Ethereum: https://github.com/ethereum/wiki/wiki/White-Paper
+* [4] TheDAO: https://download.slock.it/public/DAO/WhitePaper.pdf
+* [5] Segregated Witness: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+* [6] BitcoinNG: https://arxiv.org/pdf/1510.02037v2.pdf
+* [7] Lightning Network: https://lightning.network/lightning-network-paper-DRAFT-0.5.pdf
+* [8] Tendermint: https://github.com/tendermint/tendermint/wiki
+* [9] FLP Impossibility: https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf
+* [10] Slasher: https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/
+* [11] PBFT: http://pmg.csail.mit.edu/papers/osdi99.pdf
+* [12] BitShares: https://bitshares.org/technology/delegated-proof-of-stake-consensus/
+* [13] Stellar: https://www.stellar.org/papers/stellar-consensus-protocol.pdf
+* [14] Interledger: https://interledger.org/rfcs/0001-interledger-architecture/
+* [15] Sidechains: https://blockstream.com/sidechains.pdf
+* [16] Casper: https://blog.ethereum.org/2015/08/01/introducing-casper-friendly-ghost/
+* [17] TMSP: https://github.com/tendermint/tmsp
+* [18] Ethereum Sharding: https://github.com/ethereum/EIPs/issues/53
+* [19] LibSwift: http://www.ds.ewi.tudelft.nl/fileadmin/pds/papers/PerformanceAnalysisOfLibswift.pdf
+* [20] DLS: http://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
+* [21] Thin Client Security: https://en.bitcoin.it/wiki/Thin_Client_Security
+
+#### Unsorted links
+
+* https://www.docdroid.net/ec7xGzs/314477721-ethereum-platform-review-opportunities-and-challenges-for-private-and-consortium-blockchains.pdf.html
